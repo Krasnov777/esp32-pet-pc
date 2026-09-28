@@ -8,6 +8,8 @@ when you leave it alone.
 [![Build](https://github.com/Krasnov777/esp32-pet-pc/actions/workflows/build.yml/badge.svg)](https://github.com/Krasnov777/esp32-pet-pc/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-3dff72.svg)](LICENSE)
 
+**[Project page](https://krasnov777.github.io/esp32-pet-pc/)** · [Quick start](#quick-start) · [Wiring](WIRING.md) · 3D-printable case: coming soon
+
 <p align="center"><img src="docs/images/tour.gif" width="576" alt="PET-PC booting into BASIC, loading the weather from tape, and switching screens"></p>
 
 - **Three keys, one OLED.** A 128×64 screen and three mechanical key switches on a
@@ -115,7 +117,7 @@ switched off.
 | [Waveshare ESP32-C6-Zero](https://www.waveshare.com/esp32-c6-zero.htm) | ESP32-C6, 4 MB flash, native USB-C for flashing and serial |
 | SSD1306 128×64 I²C OLED (0.96″) | the common 4-pin module, address 0x3C, powered from 3.3 V |
 | 3 × MX-style key switches | clicky or tactile suit it best — the switch is the only click there is |
-| A PET-style case | or any box; the only mechanical need is three 14 × 14 mm switch cutouts |
+| A PET-style case | 3D-printable models coming soon — or any box with three 14 × 14 mm switch cutouts |
 
 No resistors, diodes or matrix: each switch goes from a GPIO to ground and the
 firmware turns on the internal pull-ups. The OLED lands on four consecutive

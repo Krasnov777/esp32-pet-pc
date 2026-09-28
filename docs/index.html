@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PET-PC — a Commodore PET-style desk terminal on an ESP32-C6</title>
+<meta name="description" content="A clock, the weather, your Home Assistant lights and two configurable keys on a 128x64 OLED — with a BASIC boot, tape-loading weather and a 10 PRINT screensaver.">
+<meta property="og:title" content="PET-PC">
+<meta property="og:description" content="A Commodore PET-style desk terminal on an ESP32-C6: clock, weather, Home Assistant, two configurable keys.">
+<meta property="og:image" content="https://krasnov777.github.io/esp32-pet-pc/images/block_clock.png">
+<style>
+:root{--fg:#3dff72;--dim:#1f9a45;--bg:#040704;--panel:#08110a;--line:#15361d;--glow:rgba(61,255,114,.45)}
+[data-ph=amber]{--fg:#ffb31a;--dim:#b07a0e;--bg:#070500;--panel:#110c02;--line:#3a2906;--glow:rgba(255,179,26,.4)}
+[data-ph=white]{--fg:#e6eeff;--dim:#8d96aa;--bg:#05060a;--panel:#0c0e14;--line:#262b38;--glow:rgba(220,232,255,.3)}
+*{box-sizing:border-box}
+html{background:var(--bg);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace}
+.fx{text-shadow:0 0 4px var(--glow)}
+.fx::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:40;
+ background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,.25) 2px 3px)}
+.fx::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:41;
+ background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.55) 100%)}
+.fx main{animation:on .7s ease-out}
+@keyframes on{0%{transform:scale(.5,.004);filter:brightness(5)}35%{transform:scale(1,.004);filter:brightness(3)}100%{transform:none;filter:none}}
+main{max-width:1000px;margin:0 auto;padding:28px 18px 60px}
+a{color:var(--fg)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--dim)}
+.top button{font:inherit;background:transparent;color:var(--fg);border:1px solid var(--fg);padding:1px 7px;margin-left:4px;cursor:pointer;text-shadow:inherit}
+.top button.on{background:var(--fg);color:var(--bg);text-shadow:none}
+header{text-align:center;padding:36px 0 10px}
+.title{font-size:clamp(30px,7vw,54px);font-weight:bold;letter-spacing:.14em;margin:0}
+.ready{margin:6px 0 18px}
+.cur{display:inline-block;width:.6em;height:1.05em;background:var(--fg);vertical-align:-3px;margin-left:3px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.tag{font-size:clamp(16px,2.6vw,20px);max-width:760px;margin:0 auto 10px}
+.sub{color:var(--dim);max-width:720px;margin:0 auto 24px}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-block;text-decoration:none;border:2px solid var(--fg);padding:9px 18px;text-transform:uppercase;letter-spacing:.06em;
+ box-shadow:0 4px 0 var(--dim)}
+.btn:hover{background:var(--fg);color:var(--bg);text-shadow:none}
+.btn.soon{border-style:dashed;box-shadow:none;color:var(--dim);border-color:var(--dim);cursor:default}
+.btn.soon:hover{background:transparent;color:var(--dim)}
+.mon{max-width:640px;margin:34px auto 0;padding:18px;border-radius:18px;background:#101211;border:1px solid #232725;
+ box-shadow:0 0 30px var(--glow),inset 0 0 20px #000}
+.mon img{display:block;width:100%;image-rendering:pixelated;border-radius:6px}
+.cap{color:var(--dim);font-size:13px;text-align:center;margin-top:8px}
+h2{font-size:20px;letter-spacing:.12em;margin:64px 0 14px;text-transform:uppercase}
+h2::before{content:"■ "}
+.lead{color:var(--dim);margin:0 0 20px;max-width:780px}
+.grid{display:grid;gap:14px}
+.g3{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.g2{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))}
+.card{border:1px solid var(--line);background:var(--panel);padding:16px 18px}
+.card h3{margin:0 0 6px;font-size:16px;letter-spacing:.06em}
+.card p{margin:0;color:var(--dim)}
+figure{margin:0}
+figure img{display:block;width:100%;height:auto}
+figcaption{font-size:13px;margin-top:6px}
+figcaption span{display:block;color:var(--dim)}
+.shot img{border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:normal;color:var(--dim);font-size:13px;text-transform:uppercase;letter-spacing:.08em}
+pre{background:#000;border:1px solid var(--line);padding:14px 16px;overflow-x:auto;margin:0 0 14px;font-size:14px}
+code{font-family:inherit}
+ol{padding-left:22px}ol li{margin-bottom:6px}
+.models{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.models .txt{flex:1;min-width:260px}
+footer{margin-top:70px;border-top:1px dashed var(--line);padding-top:18px;color:var(--dim);font-size:14px;text-align:center}
+footer a{margin:0 8px}
+@media (max-width:520px){.g2{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body class="fx">
+<main>
+<div class="top">
+ <span>ESP32-C6 · 128×64 OLED · 3 KEYS · MIT</span>
+ <span>PHOSPHOR <button data-ph="green">GRN</button><button data-ph="amber">AMB</button><button data-ph="white">WHT</button>
+  <button id="fxbtn">CRT FX</button></span>
+</div>
+
+<header>
+ <p class="title">*** PET-PC ***</p>
+ <p class="ready">READY.<span class="cur"></span></p>
+ <p class="tag">A Commodore PET–style desk terminal on an ESP32-C6.</p>
+ <p class="sub">A clock, the weather, your Home Assistant lights — and two keys that do whatever you tell them to.
+  It boots into BASIC, loads the weather from tape, and fills the screen with <code>10 PRINT</code> when you leave it alone.</p>
+ <div class="btns">
+  <a class="btn" href="https://github.com/Krasnov777/esp32-pet-pc">Source on GitHub</a>
+  <a class="btn" href="#start">Quick start</a>
+  <!-- 3D MODELS: when the case is published, set MODELS_URL at the bottom of this file. -->
+  <a class="btn soon models-link" href="#case">3D models — soon</a>
+ </div>
+ <div class="mon"><img src="images/tour.gif" alt="PET-PC booting into BASIC, loading the weather from tape, and switching screens"></div>
+ <p class="cap">The real firmware, rendered on a desktop: boot, tape, block clock, screens, BASIC, screensaver.</p>
+</header>
+
+<h2 id="features">What it does</h2>
+<div class="grid g3">
+ <div class="card"><h3>Three keys, one OLED</h3><p>A 128×64 screen and three mechanical key switches on a Waveshare ESP32-C6-Zero. No hub, no cloud, no YAML — it fetches everything itself.</p></div>
+ <div class="card"><h3>Seven screens</h3><p>PETSCII block clock, a classic clock, weather, a BASIC <code>READY.</code> prompt, a live program <code>LIST</code>ing, Home Assistant, system status.</p></div>
+ <div class="card"><h3>Keys you configure</h3><p>Each outer key has a press and a hold action: call a webhook, jump to a screen, toggle a light, run a scene, cycle a selector.</p></div>
+ <div class="card"><h3>Home Assistant, optional</h3><p>Show sensors and switch lights from the keys, over HA's REST API with a long-lived token — nothing to install on the HA side.</p></div>
+ <div class="card"><h3>Retro all the way down</h3><p>BASIC boot banner, <code>PRESS PLAY ON TAPE</code> around every weather fetch, CRT wipes, a power-off collapse — and a web page with scanlines.</p></div>
+ <div class="card"><h3>Kind to the OLED</h3><p>Modest brightness, a night schedule that switches the panel off, burn-in pixel shift and a screensaver keep the panel young.</p></div>
+</div>
+
+<h2 id="screens">Screens</h2>
+<p class="lead">The centre key steps through them; pick which ones — and the one it starts on — from the web page.</p>
+<div class="grid g3">
+ <figure><img src="images/block_clock.png" alt="Block clock" loading="lazy"><figcaption>Block clock<span>PETSCII block digits — the default start screen</span></figcaption></figure>
+ <figure><img src="images/clock.png" alt="Clock" loading="lazy"><figcaption>Clock<span>large time, WiFi, weather strip</span></figcaption></figure>
+ <figure><img src="images/weather.png" alt="Weather" loading="lazy"><figcaption>Weather<span>feels-like, humidity, wind, today's range, rain</span></figcaption></figure>
+ <figure><img src="images/home.png" alt="HOME" loading="lazy"><figcaption>HOME<span>Home Assistant entities — press to pick, hold to toggle</span></figcaption></figure>
+ <figure><img src="images/listing.png" alt="LIST" loading="lazy"><figcaption>LIST<span>the live data as a BASIC program; <code>TI$</code> ticks</span></figcaption></figure>
+ <figure><img src="images/basic.png" alt="BASIC" loading="lazy"><figcaption>BASIC<span>the centre key types and runs commands</span></figcaption></figure>
+ <figure><img src="images/system.png" alt="System" loading="lazy"><figcaption>System<span>address, signal, uptime, memory, sync</span></figcaption></figure>
+ <figure><img src="images/boot.png" alt="Boot banner" loading="lazy"><figcaption>Boot<span>BASIC banner, memory count-up, then WiFi</span></figcaption></figure>
+ <figure><img src="images/maze.png" alt="10 PRINT maze" loading="lazy"><figcaption>Screensaver<span><code>10 PRINT CHR$(205.5+RND(1));</code></span></figcaption></figure>
+</div>
+
+<h2 id="tape">Weather, loaded from tape</h2>
+<p class="lead">Every refresh plays <code>LOAD "WEATHER"</code> → <code>PRESS PLAY ON TAPE #1</code> → <code>SEARCHING</code> → <code>LOADING</code>,
+ does the real fetch at that step, then <code>RUN</code>s it. Screen changes get a scan-line wipe or a vertical-hold roll, and at night the
+ picture collapses to a line and a dot like a CRT switching off. All of it can be turned off.</p>
+<div class="grid g2">
+ <figure><img src="images/tape_searching.png" alt="PRESS PLAY ON TAPE, SEARCHING FOR WEATHER" loading="lazy"></figure>
+ <figure><img src="images/tape_run.png" alt="RUN prints the weather" loading="lazy"></figure>
+</div>
+
+<h2 id="web">The web page</h2>
+<p class="lead">Everything is set from <code>http://pet-pc.local/</code> — no app, no reflashing. The page lives in the firmware, so it works
+ over the device's own hotspot too. Every setting explains itself; Save waits until the settings have loaded, sends only what changed,
+ and flags a bad value before it is sent — <code>?SYNTAX ERROR</code>.</p>
+<div class="grid g2">
+ <figure class="shot"><img src="images/web_live.png" alt="Live tab" loading="lazy"><figcaption>Live<span>the OLED mirrored, and three virtual keys</span></figcaption></figure>
+ <figure class="shot"><img src="images/web_keys.png" alt="Keys tab" loading="lazy"><figcaption>Keys<span>a press and a hold action per key, with Try it</span></figcaption></figure>
+ <figure class="shot"><img src="images/web_ha.png" alt="Home Assistant tab" loading="lazy"><figcaption>Home Assistant<span>connection test, entities with live values</span></figcaption></figure>
+ <figure class="shot"><img src="images/web_display_dirty.png" alt="Display tab with an unsaved change" loading="lazy"><figcaption>Display<span>an unsaved change: marked, tab starred, Save bar</span></figcaption></figure>
+</div>
+
+<h2 id="hardware">Hardware</h2>
+<div class="card">
+<table>
+ <tr><th>Part</th><th>Notes</th></tr>
+ <tr><td>Waveshare ESP32-C6-Zero</td><td>ESP32-C6, 4 MB flash, native USB-C for flashing and serial</td></tr>
+ <tr><td>SSD1306 128×64 I²C OLED (0.96″)</td><td>the common 4-pin module, address 0x3C, powered from 3.3 V</td></tr>
+ <tr><td>3 × MX-style key switches</td><td>clicky or tactile — the switch is the only click there is</td></tr>
+ <tr><td>A PET-style case</td><td>3D-printable — <a href="#case">see below</a> — or any box with three 14 × 14 mm cutouts</td></tr>
+</table>
+</div>
+<p class="lead" style="margin-top:14px">No resistors, diodes or matrix: each key goes from a GPIO to ground, and the OLED sits on four consecutive header pins —
+ one straight ribbon. OLED on GP0/GP1, keys on GP18/GP19/GP20. Full pin map and assembly notes in
+ <a href="https://github.com/Krasnov777/esp32-pet-pc/blob/main/WIRING.md">WIRING.md</a>.</p>
+
+<div class="card models" id="case">
+ <div class="txt">
+  <h3>3D-printable case</h3>
+  <p id="models-text">The PET-style case — shell, key plate and screen bezel — is being prepared for publishing. The models will be linked here.</p>
+ </div>
+ <a class="btn soon models-link" href="#case">Models — coming soon</a>
+</div>
+
+<h2 id="start">Quick start</h2>
+<p class="lead">You need <a href="https://platformio.org/install/cli">PlatformIO</a> Core 6.2 or newer and a USB-C data cable.</p>
+<pre><code>git clone https://github.com/Krasnov777/esp32-pet-pc.git
+cd esp32-pet-pc/firmware
+pio run -t upload        # builds and flashes over USB-C</code></pre>
+<ol>
+ <li>On first boot PET-PC opens a hotspot, <b>PET-PC-XXXX</b>. Join it and browse to <b>http://192.168.4.1/</b>.</li>
+ <li><b>Network</b> tab: your WiFi (2.4 GHz). Save — PET-PC restarts and joins it.</li>
+ <li>Browse to <b>http://pet-pc.local/</b>: pick your time zone and location, set the keys. Done.</li>
+</ol>
+<p class="lead">Later updates go over WiFi: <code>pio run -e ota -t upload --upload-port &lt;device-ip&gt;</code>. Settings survive every update.</p>
+
+<h2 id="ha">Home Assistant</h2>
+<p class="lead">In HA, create a long-lived access token (profile → Security). On PET-PC's page, enter the HA URL, the token and up to six
+ entities — each a <b>Value</b> (a temperature, a status) or a <b>Switch</b> (ON/OFF, toggled from the centre key). The outer keys can also
+ toggle any entity or call any service: <code>scene.turn_on</code>, <code>script.turn_on</code>, <code>input_select.select_next</code>.
+ The token is write-only and never leaves for a server it was not entered for.</p>
+
+<footer>
+ <p><a href="https://github.com/Krasnov777/esp32-pet-pc">GitHub</a>·<a href="https://github.com/Krasnov777/esp32-pet-pc#readme">README</a>·<a href="https://github.com/Krasnov777/esp32-pet-pc/blob/main/WIRING.md">Wiring</a>·<a href="https://github.com/Krasnov777/esp32-pet-pc/blob/main/ARCHITECTURE.md">Architecture</a>·<a href="https://github.com/Krasnov777/esp32-pet-pc/blob/main/CHANGELOG.md">Changelog</a></p>
+ <p>MIT licensed. Built with PlatformIO, U8g2 and ArduinoJson; weather by Open-Meteo; PxPlus IBM CGA font by VileR.</p>
+ <p>READY.</p>
+</footer>
+</main>
+<script>
+// Where the 3D models live. Empty = "coming soon"; set it and every models link goes live.
+const MODELS_URL = '';
+
+if (MODELS_URL) {
+  document.querySelectorAll('.models-link').forEach(a => {
+    a.href = MODELS_URL; a.classList.remove('soon'); a.textContent = '3D models';
+    a.target = '_blank'; a.rel = 'noopener';
+  });
+  document.getElementById('models-text').textContent =
+    'The PET-style case — shell, key plate and screen bezel — ready to print.';
+}
+function prefs() {
+  let ph = 'green', fx = true;
+  try { ph = localStorage.ph || 'green'; fx = localStorage.fx !== '0'; } catch (e) {}
+  document.documentElement.dataset.ph = ph;
+  document.body.classList.toggle('fx', fx);
+  document.querySelectorAll('[data-ph]').forEach(b => b.classList.toggle('on', b.dataset.ph === ph));
+  document.getElementById('fxbtn').classList.toggle('on', fx);
+}
+function setPref(k, v) { try { localStorage[k] = v; } catch (e) {} prefs(); }
+document.querySelectorAll('[data-ph]').forEach(b => b.onclick = () => setPref('ph', b.dataset.ph));
+document.getElementById('fxbtn').onclick = () => setPref('fx', document.body.classList.contains('fx') ? '0' : '1');
+prefs();
+</script>
+</body>
+</html>
