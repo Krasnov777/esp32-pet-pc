@@ -124,7 +124,11 @@ bool fetch() {
     n.day_min_c = doc["daily"]["temperature_2m_min"][0] | n.temp_c;
     n.rain_prob = (uint8_t)(doc["daily"]["precipitation_probability_max"][0] | 0);
 
-    Kind k = kind_of(j["weather_code"] | 3);
+    // No weather code says nothing about the sky: show "?" rather than a
+    // guess — a default of 3 used to read as a perfectly real "Overcast".
+    JsonVariantConst wc = j["weather_code"];
+    Kind k = wc.is<int>() ? kind_of(wc.as<int>()) : Kind{Icon::Cloud, Icon::Cloud, "?"};
+    if (!wc.is<int>()) Serial.println(F("[weather] response has no weather_code"));
     bool day = (j["is_day"] | 1) != 0;
     n.icon = day ? k.day : k.night;
     strlcpy(n.desc, k.desc, sizeof(n.desc));

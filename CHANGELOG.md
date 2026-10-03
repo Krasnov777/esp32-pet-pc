@@ -5,6 +5,12 @@ running one is on the System screen and in `/api/state` (`live.fw`).
 Settings live in NVS and survive every update below — each entry says when
 a settings blob was migrated.
 
+## 1.3.1 — 2026-10-03
+
+- A weather response without a weather code now shows the condition as `?`
+  instead of falling back to "Overcast", so a broken reading can no longer pass
+  for real weather.
+
 ## 1.3.0 — 2026-09-28
 
 - **Configurable outer keys.** Left and right each have a press and a hold
