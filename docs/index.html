@@ -95,8 +95,7 @@ footer a{margin:0 8px}
  <div class="btns">
   <a class="btn" href="https://github.com/Krasnov777/esp32-pet-pc">Source on GitHub</a>
   <a class="btn" href="#start">Quick start</a>
-  <!-- 3D MODELS: when the case is published, set MODELS_URL at the bottom of this file. -->
-  <a class="btn soon models-link" href="#case">3D models — soon</a>
+  <a class="btn models-link" href="https://www.printables.com/model/1864857-pet-pc-retro-pet-style-desk-terminal" target="_blank" rel="noopener">3D models on Printables</a>
  </div>
  <div class="hero"><img src="images/hero_animated.gif" alt="PET-PC on a desk, its screen booting into BASIC, loading the weather from tape and cycling through its screens"></div>
  <p class="cap">A render of the case with the real firmware's screens playing: boot, tape loading, the clocks, BASIC, the 10 PRINT maze.</p>
@@ -156,7 +155,7 @@ footer a{margin:0 8px}
  <tr><td>Waveshare ESP32-C6-Zero</td><td>ESP32-C6, 4 MB flash, native USB-C for flashing and serial</td></tr>
  <tr><td>SSD1306 128×64 I²C OLED (0.96″)</td><td>the common 4-pin module, address 0x3C, powered from 3.3 V</td></tr>
  <tr><td>3 × MX-style key switches</td><td>clicky or tactile — the switch is the only click there is</td></tr>
- <tr><td>A PET-style case</td><td>3D-printable — <a href="#case">see below</a> — or any box with three 14 × 14 mm cutouts</td></tr>
+ <tr><td>A PET-style case</td><td>3D-printable — <a href="https://www.printables.com/model/1864857-pet-pc-retro-pet-style-desk-terminal" target="_blank" rel="noopener">on Printables</a> — or any box with three 14 × 14 mm cutouts</td></tr>
 </table>
 </div>
 <p class="lead" style="margin-top:14px">No resistors, diodes or matrix: each key goes from a GPIO to ground, and the OLED sits on four consecutive header pins —
@@ -170,9 +169,10 @@ footer a{margin:0 8px}
 <div class="card models" id="case">
  <div class="txt">
   <h3>3D-printable case</h3>
-  <p id="models-text">The PET-style case — shell, key plate and screen bezel — is being prepared for publishing. The models will be linked here.</p>
+  <p id="models-text">The PET-style case — seven parts, print-ready 3MF and STLs, and an 8-page illustrated build guide — is on Printables.
+  It prints in about 2 h 40 min from ~68 g of PLA; everything is press-fit except two small glued trim parts and one screw.</p>
  </div>
- <a class="btn soon models-link" href="#case">Models — coming soon</a>
+ <a class="btn models-link" href="https://www.printables.com/model/1864857-pet-pc-retro-pet-style-desk-terminal" target="_blank" rel="noopener">Get the 3D models</a>
 </div>
 
 <h2 id="start">Quick start</h2>
@@ -202,10 +202,11 @@ pio run -t upload        # builds and flashes over USB-C</code></pre>
 </footer>
 </main>
 <script>
-// Where the 3D models live. Empty = "coming soon"; set it and every models link goes live.
-const MODELS_URL = '';
+// Where the 3D models live. The links above already point there; this keeps any link
+// still marked "soon" in step if the URL ever changes.
+const MODELS_URL = 'https://www.printables.com/model/1864857-pet-pc-retro-pet-style-desk-terminal';
 
-if (MODELS_URL) {
+if (MODELS_URL && document.querySelector('.models-link.soon')) {
   document.querySelectorAll('.models-link').forEach(a => {
     a.href = MODELS_URL; a.classList.remove('soon'); a.textContent = '3D models';
     a.target = '_blank'; a.rel = 'noopener';
