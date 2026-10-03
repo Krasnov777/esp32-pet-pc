@@ -293,3 +293,7 @@ in for the PET's character ROM.
 ## License
 
 [MIT](LICENSE).
+
+---
+
+<sub>PET-PC is an unofficial, independent project. It is not affiliated with, endorsed by or sponsored by Commodore; "PET" is used only to describe the design inspiration, and all trademarks belong to their owners.</sub>
