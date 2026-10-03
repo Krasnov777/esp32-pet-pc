@@ -10,7 +10,7 @@ when you leave it alone.
 
 **[Project page](https://krasnov777.github.io/esp32-pet-pc/)** · [Quick start](#quick-start) · [Wiring](WIRING.md) · 3D-printable case: coming soon
 
-<p align="center"><img src="docs/images/tour.gif" width="576" alt="PET-PC booting into BASIC, loading the weather from tape, and switching screens"></p>
+<p align="center"><img src="docs/images/hero_animated.gif" width="640" alt="PET-PC on a desk, its screen booting into BASIC, loading the weather from tape and cycling through its screens (render)"></p>
 
 - **Three keys, one OLED.** A 128×64 screen and three mechanical key switches on a
   Waveshare ESP32-C6-Zero. No hub, no cloud, no YAML — the box fetches everything
@@ -33,6 +33,8 @@ when you leave it alone.
 ## Screens
 
 The centre key steps through them; pick which ones on the web page.
+
+<p align="center"><img src="docs/images/tour.gif" width="576" alt="The firmware's screens: BASIC boot, tape loading, block clock, weather, HOME, BASIC prompt, the 10 PRINT maze"></p>
 
 <table>
 <tr>
@@ -131,6 +133,9 @@ header pins, so one straight 4-wire ribbon connects it.
 Pin map, wiring diagram, the one-GND workaround and assembly tips:
 **[WIRING.md](WIRING.md)**. A different pin is a one-line change in
 [`board_config.h`](firmware/src/board_config.h).
+
+<p align="center"><img src="docs/images/render_exploded.jpg" width="420" alt="Exploded view: base with three Cherry MX switches, the ESP32-C6-Zero and its holder with one M2 screw, the main frame, keycaps, the monitor with its display and screen frame"><br>
+<sub>What's inside: base and switches, the ESP32-C6-Zero under its holder (one M2 screw), the main frame, and the monitor with the OLED.</sub></p>
 
 ---
 
@@ -288,7 +293,9 @@ curl -X POST -H 'Content-Type: application/json' \
 [ArduinoJson](https://arduinojson.org/), weather from
 [Open-Meteo](https://open-meteo.com/) (free, no key), and the
 [PxPlus IBM CGA](https://int10h.org/oldschool-pc-fonts/) font by VileR standing
-in for the PET's character ROM.
+in for the PET's character ROM. The renders use the Cherry MX switch model from
+[keyswitch-kicad-library](https://github.com/kiswitch/keyswitch-kicad-library)
+(MIT, © keyswitch-kicad-library contributors).
 
 ## License
 

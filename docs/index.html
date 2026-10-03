@@ -7,7 +7,7 @@
 <meta name="description" content="A clock, the weather, your Home Assistant lights and two configurable keys on a 128x64 OLED — with a BASIC boot, tape-loading weather and a 10 PRINT screensaver.">
 <meta property="og:title" content="PET-PC">
 <meta property="og:description" content="A Commodore PET-style desk terminal on an ESP32-C6: clock, weather, Home Assistant, two configurable keys.">
-<meta property="og:image" content="https://krasnov777.github.io/esp32-pet-pc/images/block_clock.png">
+<meta property="og:image" content="https://krasnov777.github.io/esp32-pet-pc/images/render_hero.jpg">
 <style>
 :root{--fg:#3dff72;--dim:#1f9a45;--bg:#040704;--panel:#08110a;--line:#15361d;--glow:rgba(61,255,114,.45)}
 [data-ph=amber]{--fg:#ffb31a;--dim:#b07a0e;--bg:#070500;--panel:#110c02;--line:#3a2906;--glow:rgba(255,179,26,.4)}
@@ -43,6 +43,11 @@ header{text-align:center;padding:36px 0 10px}
 .mon{max-width:640px;margin:34px auto 0;padding:18px;border-radius:18px;background:#101211;border:1px solid #232725;
  box-shadow:0 0 30px var(--glow),inset 0 0 20px #000}
 .mon img{display:block;width:100%;image-rendering:pixelated;border-radius:6px}
+.hero{max-width:820px;margin:30px auto 0}
+.hero img{display:block;width:100%;border-radius:12px;box-shadow:0 0 34px var(--glow),0 10px 40px rgba(0,0,0,.6)}
+.hw{display:grid;grid-template-columns:1.25fr 1fr;gap:20px;align-items:start}
+.hw figure img{border-radius:10px;border:1px solid var(--line)}
+@media (max-width:760px){.hw{grid-template-columns:1fr}}
 .cap{color:var(--dim);font-size:13px;text-align:center;margin-top:8px}
 h2{font-size:20px;letter-spacing:.12em;margin:64px 0 14px;text-transform:uppercase}
 h2::before{content:"■ "}
@@ -93,8 +98,8 @@ footer a{margin:0 8px}
   <!-- 3D MODELS: when the case is published, set MODELS_URL at the bottom of this file. -->
   <a class="btn soon models-link" href="#case">3D models — soon</a>
  </div>
- <div class="mon"><img src="images/tour.gif" alt="PET-PC booting into BASIC, loading the weather from tape, and switching screens"></div>
- <p class="cap">The real firmware, rendered on a desktop: boot, tape, block clock, screens, BASIC, screensaver.</p>
+ <div class="hero"><img src="images/hero_animated.gif" alt="PET-PC on a desk, its screen booting into BASIC, loading the weather from tape and cycling through its screens"></div>
+ <p class="cap">A render of the case with the real firmware's screens playing: boot, tape loading, the clocks, BASIC, the 10 PRINT maze.</p>
 </header>
 
 <h2 id="features">What it does</h2>
@@ -109,6 +114,7 @@ footer a{margin:0 8px}
 
 <h2 id="screens">Screens</h2>
 <p class="lead">The centre key steps through them; pick which ones — and the one it starts on — from the web page.</p>
+<div class="mon" style="margin:0 auto 22px"><img src="images/tour.gif" alt="The firmware's screens: boot, tape loading, block clock, weather, HOME, BASIC, the 10 PRINT maze"></div>
 <div class="grid g3">
  <figure><img src="images/block_clock.png" alt="Block clock" loading="lazy"><figcaption>Block clock<span>PETSCII block digits — the default start screen</span></figcaption></figure>
  <figure><img src="images/clock.png" alt="Clock" loading="lazy"><figcaption>Clock<span>large time, WiFi, weather strip</span></figcaption></figure>
@@ -142,6 +148,8 @@ footer a{margin:0 8px}
 </div>
 
 <h2 id="hardware">Hardware</h2>
+<div class="hw">
+<div>
 <div class="card">
 <table>
  <tr><th>Part</th><th>Notes</th></tr>
@@ -154,6 +162,10 @@ footer a{margin:0 8px}
 <p class="lead" style="margin-top:14px">No resistors, diodes or matrix: each key goes from a GPIO to ground, and the OLED sits on four consecutive header pins —
  one straight ribbon. OLED on GP0/GP1, keys on GP18/GP19/GP20. Full pin map and assembly notes in
  <a href="https://github.com/Krasnov777/esp32-pet-pc/blob/main/WIRING.md">WIRING.md</a>.</p>
+</div>
+<figure><img src="images/render_exploded.jpg" alt="Exploded view: base with three Cherry MX switches, the ESP32-C6-Zero and its holder with one M2 screw, the main frame, keycaps, the monitor with its display and screen frame" loading="lazy">
+ <figcaption>What's inside<span>base and switches, the ESP32-C6-Zero under its holder (one M2 screw), the main frame, the monitor with the OLED</span></figcaption></figure>
+</div>
 
 <div class="card models" id="case">
  <div class="txt">
@@ -183,7 +195,8 @@ pio run -t upload        # builds and flashes over USB-C</code></pre>
 
 <footer>
  <p><a href="https://github.com/Krasnov777/esp32-pet-pc">GitHub</a>·<a href="https://github.com/Krasnov777/esp32-pet-pc#readme">README</a>·<a href="https://github.com/Krasnov777/esp32-pet-pc/blob/main/WIRING.md">Wiring</a>·<a href="https://github.com/Krasnov777/esp32-pet-pc/blob/main/ARCHITECTURE.md">Architecture</a>·<a href="https://github.com/Krasnov777/esp32-pet-pc/blob/main/CHANGELOG.md">Changelog</a></p>
- <p>MIT licensed. Built with PlatformIO, U8g2 and ArduinoJson; weather by Open-Meteo; PxPlus IBM CGA font by VileR.</p>
+ <p>MIT licensed. Built with PlatformIO, U8g2 and ArduinoJson; weather by Open-Meteo; PxPlus IBM CGA font by VileR.
+  Renders use the Cherry MX model from <a href="https://github.com/kiswitch/keyswitch-kicad-library">keyswitch-kicad-library</a> (MIT).</p>
  <p class="disclaimer">PET-PC is an unofficial, independent project. It is not affiliated with, endorsed by or sponsored by Commodore; "PET" is used only to describe the design inspiration, and all trademarks belong to their owners.</p>
  <p>READY.</p>
 </footer>
