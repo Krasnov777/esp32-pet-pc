@@ -5,6 +5,12 @@ running one is on the System screen and in `/api/state` (`live.fw`).
 Settings live in NVS and survive every update below — each entry says when
 a settings blob was migrated.
 
+## 1.3.2 — 2026-10-10
+
+- The bottom text row no longer loses its last pixel line while the burn-in
+  shift is in its lower position: HOME, LIST and the BASIC terminal now shift
+  1 px up instead of down. Most visible on the HOME footer.
+
 ## 1.3.1 — 2026-10-03
 
 - A weather response without a weather code now shows the condition as `?`

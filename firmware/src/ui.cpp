@@ -100,6 +100,11 @@ void hline(int y) {
 // 1 px of the sideways shift; the glyphs' blank right column absorbs that.
 int term_x() { return ox > 1 ? 1 : ox; }
 
+// All 8 rows fill the full 64 px too, and the face sits 1 px low in its cell
+// (blank line on top, capitals down to the cell's last line), so the vertical
+// shift goes up instead of down: -1..0 keeps the bottom row on the glass.
+int term_y() { return oy - 1; }
+
 // Both dim thresholds are hours; a window that wraps midnight (23 → 7) is the
 // normal case, so the comparison has to handle from > to. Without NTP there is
 // no defensible answer, so the day level wins — being too bright at 3 a.m. is
@@ -433,9 +438,10 @@ void big_digit(int x, int y, uint8_t d) {
             if (BIG[d][r][c]) pet::glyph(x + c * pet::CELL, y + r * pet::CELL, BIG[d][r][c]);
 }
 
-// Right-align PET text so its last cell ends at the screen edge.
+// Right-align PET text so its last cell ends at the screen edge; y already
+// carries the burn-in offset.
 void pet_right(int y, const char* s) {
-    pet::text(term_x() + board::OLED_W - (int)strlen(s) * pet::CELL, oy + y, s);
+    pet::text(term_x() + board::OLED_W - (int)strlen(s) * pet::CELL, y, s);
 }
 
 // Date and temperature across the top, the condition along the bottom — a
@@ -449,7 +455,7 @@ void draw_block_clock() {
     weather::Current w = weather::get();
     if (w.valid) {
         snprintf(buf, sizeof(buf), "%.0fC", w.temp_c);
-        pet_right(0, buf);
+        pet_right(oy, buf);
         strlcpy(buf, w.desc, sizeof(buf));
     } else {
         strlcpy(buf, weather::status() == weather::Status::NoWifi ? "OFFLINE" : "LOADING...", sizeof(buf));
@@ -463,7 +469,7 @@ void draw_block_clock() {
     if (ok) {
         int h = t.tm_hour;
         if (h12) {
-            pet_right(55, h < 12 ? "AM" : "PM");
+            pet_right(oy + 55, h < 12 ? "AM" : "PM");
             h %= 12;
             if (h == 0) h = 12;
         }
@@ -542,20 +548,20 @@ bool home_has_toggle() {
 // highlighted one in reverse video. The footer says what the keys do, or
 // why there is nothing to show.
 void draw_home() {
-    int  x = term_x();
+    int  x = term_x(), y = term_y();
     char b[24];
-    pet::text(x, oy, "HOME");
+    pet::text(x, y, "HOME");
     struct tm t;
     if (timekeeper::local(t)) {
         snprintf(b, sizeof(b), "%02d:%02d", t.tm_hour, t.tm_min);
-        pet_right(0, b);
+        pet_right(y, b);
     }
 
     if (!ha::configured()) {
-        pet::text(x, oy + 16, "NOT SET UP.");
-        pet::text(x, oy + 32, "ADD URL, TOKEN");
-        pet::text(x, oy + 40, "AND ENTITIES ON");
-        pet::text(x, oy + 48, "THE WEB PAGE");
+        pet::text(x, y + 16, "NOT SET UP.");
+        pet::text(x, y + 32, "ADD URL, TOKEN");
+        pet::text(x, y + 40, "AND ENTITIES ON");
+        pet::text(x, y + 48, "THE WEB PAGE");
         return;
     }
 
@@ -572,7 +578,7 @@ void draw_home() {
         memcpy(line + term::COLS - vl, val, vl);
         size_t room = term::COLS - vl - 2;        // a gutter column, a space before the value
         memcpy(line + 1, e.name, strnlen(e.name, room));
-        pet::text(x, oy + row * pet::CELL, line, s == home_sel);
+        pet::text(x, y + row * pet::CELL, line, s == home_sel);
         row++;
     }
 
@@ -586,7 +592,7 @@ void draw_home() {
             if (home_has_toggle()) foot = home_sel >= 0 ? "C:NEXT  HOLD:TGL" : "C:PICK A SWITCH";
             break;
     }
-    if (foot) pet::text(x, oy + 7 * pet::CELL, foot);
+    if (foot) pet::text(x, y + 7 * pet::CELL, foot);
 }
 
 // The row shows "..." on the glass before the POST blocks, like the desk
@@ -608,7 +614,7 @@ void draw_listing(uint32_t now) {
     listing_scr.clear();
     listing([](const char* l) { listing_scr.println(l); });
     listing_scr.println("READY.");
-    listing_scr.draw(term_x(), oy, (now / BLINK_MS) % 2 == 0);
+    listing_scr.draw(term_x(), term_y(), (now / BLINK_MS) % 2 == 0);
 }
 
 void draw_info() {
@@ -880,14 +886,14 @@ void tick(bool force) {
     g.clearBuffer();
     if (toast_on)                    draw_toast();
     else if (in_boot)                r.boot ? draw_boot_retro() : draw_boot();
-    else if (tape_overlay || saver_on) con.draw(term_x(), oy, cursor_visible(now));
+    else if (tape_overlay || saver_on) con.draw(term_x(), term_y(), cursor_visible(now));
     else switch (cur_mode) {
         case Mode::Weather:    draw_weather();       break;
         case Mode::Info:       draw_info();          break;
         case Mode::BlockClock: draw_block_clock();   break;
         case Mode::Listing:    draw_listing(now);    break;
         case Mode::Home:       draw_home();          break;
-        case Mode::Basic:      con.draw(term_x(), oy, cursor_visible(now)); break;
+        case Mode::Basic:      con.draw(term_x(), term_y(), cursor_visible(now)); break;
         default:               draw_clock();         break;
     }
     fx::apply();
