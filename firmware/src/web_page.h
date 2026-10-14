@@ -72,6 +72,7 @@ input::placeholder{color:var(--dim);opacity:.7}
 .mon{max-width:420px;margin:0 auto 14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#000;
  box-shadow:inset 0 0 24px rgba(0,0,0,.9),0 0 18px var(--glow)}
 .bezel{background:var(--fg);line-height:0}
+.duo .bezel{background:linear-gradient(#ffd23c 0 25%,var(--fg) 25%)}
 .bezel img{width:100%;image-rendering:pixelated;mix-blend-mode:multiply;display:block}
 .fx .bezel{animation:flick 5s infinite}
 @keyframes flick{0%,100%{opacity:1}48%{opacity:1}50%{opacity:.9}52%{opacity:1}}
@@ -311,6 +312,10 @@ function build(){
  field('display','clock_24h',{kind:'check',label:'24-hour clock',help:'Off = 12-hour with AM/PM.'});
  field('display','display.burn_in_shift',{kind:'check',label:'Burn-in pixel shift',
   help:'Nudges the whole picture by up to 2 px every two minutes, so no pixel shows the same thing for months.'});
+ h2('display','Panel');
+ field('display','display.two_colour',{kind:'check',label:'Two-colour panel (yellow top band)',
+  help:'For the yellow/blue 0.96" OLEDs: the top 16 pixel rows are yellow, the rest blue, with a gap between them. '+
+   'The screens are rearranged so nothing is cut in half by that gap.'});
 
  // HOME ASSISTANT
  h2('ha','Connection');
@@ -390,6 +395,7 @@ function fill(s){
  const bt=TZ.find(z=>z[0]===bz);
  $('#tzhint').innerHTML=bz?`This browser is in <b>${esc(bz)}</b>`+(bt&&bt[2]!==s.loc.tz?` — pick “${esc(bt[1])}” to match it.`:'.'):'';
  keyLabels(s);
+ $('.mon').classList.toggle('duo',!!s.display.two_colour);
  dirty();
 }
 const isDirty=f=>f.secret?f.get()!=='':JSON.stringify(f.get())!==JSON.stringify(f.orig);

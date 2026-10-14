@@ -78,7 +78,7 @@ is a single file in the firmware, so it also works over the device's own hotspot
   press, keep it down = hold).
 - **Keys** — press and hold actions for the outer keys, with **Try it** buttons.
 - **Screens**, **Display** — rotation, start screen, screensaver, retro extras,
-  brightness, night hours.
+  brightness, night hours, two-colour panel.
 - **Home Assistant** — URL, token, **Test connection**, and the HOME entities with
   their live values.
 - **Weather & time** — location (or *use this browser's location*), a time-zone
@@ -117,7 +117,7 @@ switched off.
 | Part | Notes |
 |------|-------|
 | [Waveshare ESP32-C6-Zero](https://www.waveshare.com/esp32-c6-zero.htm) | ESP32-C6, 4 MB flash, native USB-C for flashing and serial |
-| SSD1306 128×64 I²C OLED (0.96″) | the common 4-pin module, address 0x3C, powered from 3.3 V |
+| SSD1306 128×64 I²C OLED (0.96″) | the common 4-pin module, address 0x3C, powered from 3.3 V. Yellow/blue two-colour panels work too: turn on **Two-colour panel** under Display |
 | 3 × MX-style key switches | clicky or tactile suit it best — the switch is the only click there is |
 | A PET-style case | the 3D-printable case [on Printables](https://www.printables.com/model/1864857-pet-pc-retro-pet-style-desk-terminal) (print-ready 3MF + build guide), or any box with three 14 × 14 mm switch cutouts |
 

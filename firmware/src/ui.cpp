@@ -105,6 +105,15 @@ int term_x() { return ox > 1 ? 1 : ox; }
 // shift goes up instead of down: -1..0 keeps the bottom row on the glass.
 int term_y() { return oy - 1; }
 
+// A two-colour panel is yellow above row 16 and blue from it, with a strip of
+// bare glass between the two. Each screen keeps every element wholly on one
+// side, with the burn-in shift included: a header line that is 1 px too tall
+// gets cut in half by that strip. The 8-row character screens already fit, as
+// two yellow lines over six blue ones (term_y keeps line 1 above row 16).
+constexpr int DUO_SEAM = 16;
+
+bool duo() { return settings::panel().two_colour; }
+
 // Both dim thresholds are hours; a window that wraps midnight (23 → 7) is the
 // normal case, so the comparison has to handle from > to. Without NTP there is
 // no defensible answer, so the day level wins — being too bright at 3 a.m. is
@@ -345,12 +354,13 @@ bool cursor_visible(uint32_t now) {
 
 void draw_boot() {
     U8G2& g = display::u8g2();
+    bool d2 = duo();
     g.setFont(u8g2_font_7x13B_tf);
-    centred("PET-PC", 22);
+    centred("PET-PC", d2 ? 12 : 22);
     g.setFont(u8g2_font_6x12_tf);
-    centred(boot1, 42);
+    centred(boot1, d2 ? 36 : 42);
     g.setFont(u8g2_font_5x7_tf);
-    centred(boot2, 56);
+    centred(boot2, d2 ? 52 : 56);
 }
 
 // Power-on the PET way: a blank moment, the banner, the free memory counting
@@ -386,9 +396,16 @@ void draw_clock() {
     icons::wifi_bars(ox + 114, oy + 0, WiFi.RSSI(), WiFi.status() == WL_CONNECTED);
     hline(9);
 
+    // The 28 px face would start at row 13, so a two-colour panel gets the
+    // 26 px one, one row below the seam.
     timekeeper::format_time(buf, sizeof(buf));
-    g.setFont(u8g2_font_logisoso28_tn);
-    centred(buf, 41);
+    if (duo()) {
+        g.setFont(u8g2_font_logisoso26_tn);
+        centred(buf, DUO_SEAM + 27);
+    } else {
+        g.setFont(u8g2_font_logisoso28_tn);
+        centred(buf, 41);
+    }
 
     hline(44);
 
@@ -445,23 +462,28 @@ void pet_right(int y, const char* s) {
 }
 
 // Date and temperature across the top, the condition along the bottom — a
-// 16-column row is too narrow for both "12.4C" and "PARTLY CLOUDY".
+// 16-column row is too narrow for both "12.4C" and "PARTLY CLOUDY". On a
+// two-colour panel both text lines go in the yellow band and the 40 px digits
+// sit in the blue part, which has no room for a line under them.
 void draw_block_clock() {
     char buf[32];
     bool h12 = !settings::state().clock_24h;
+    bool d2  = duo();
+    int  top  = d2 ? term_y() : oy;
+    int  foot = d2 ? term_y() + pet::CELL : oy + 55;
     timekeeper::format_date(buf, sizeof(buf));
-    pet::text(ox, oy, buf);
+    pet::text(ox, top, buf);
 
     weather::Current w = weather::get();
     if (w.valid) {
         snprintf(buf, sizeof(buf), "%.0fC", w.temp_c);
-        pet_right(oy, buf);
+        pet_right(top, buf);
         strlcpy(buf, w.desc, sizeof(buf));
     } else {
         strlcpy(buf, weather::status() == weather::Status::NoWifi ? "OFFLINE" : "LOADING...", sizeof(buf));
     }
     if (h12) buf[term::COLS - 3] = '\0';     // room for " AM"
-    pet::text(ox, oy + 55, buf);
+    pet::text(ox, foot, buf);
 
     struct tm t;
     bool ok = timekeeper::local(t);
@@ -469,7 +491,7 @@ void draw_block_clock() {
     if (ok) {
         int h = t.tm_hour;
         if (h12) {
-            pet_right(oy + 55, h < 12 ? "AM" : "PM");
+            pet_right(foot, h < 12 ? "AM" : "PM");
             h %= 12;
             if (h == 0) h = 12;
         }
@@ -481,7 +503,7 @@ void draw_block_clock() {
     }
 
     // 24 px digits with a 2 px gap, and an 8 px cell for the colon.
-    constexpr int Y = 12;
+    const int Y = d2 ? DUO_SEAM + 4 : 12;
     big_digit(ox + 10, oy + Y, d[0]);
     big_digit(ox + 36, oy + Y, d[1]);
     big_digit(ox + 68, oy + Y, d[2]);
@@ -513,7 +535,8 @@ void draw_weather() {
         return;
     }
 
-    icons::weather_icon(ox + 2, oy + 12, w.icon, 24);
+    // The sun's top ray reaches 3 px into the icon's box.
+    icons::weather_icon(ox + 2, oy + (duo() ? DUO_SEAM : 12), w.icon, 24);
 
     g.setFont(u8g2_font_7x13B_tf);
     snprintf(buf, sizeof(buf), "%.1f°C", w.temp_c);
@@ -546,9 +569,11 @@ bool home_has_toggle() {
 
 // One row per configured entity: name on the left, value flush right, the
 // highlighted one in reverse video. The footer says what the keys do, or
-// why there is nothing to show.
+// why there is nothing to show. A two-colour panel moves the footer up into
+// the yellow band, under the title, so the entities are all on the blue part.
 void draw_home() {
     int  x = term_x(), y = term_y();
+    bool d2 = duo();
     char b[24];
     pet::text(x, y, "HOME");
     struct tm t;
@@ -565,8 +590,8 @@ void draw_home() {
         return;
     }
 
-    uint8_t row = 1;
-    for (uint8_t s = 0; s < settings::HA_SLOTS && row < 7; s++) {
+    uint8_t row = d2 ? 2 : 1;
+    for (uint8_t s = 0; s < settings::HA_SLOTS && row < (d2 ? 8 : 7); s++) {
         if (ha::kind(s) == ha::Kind::Unused) continue;
         const ha::Entity& e = ha::entity(s);
         const char* val = s == home_busy ? "..." : e.value;
@@ -592,7 +617,7 @@ void draw_home() {
             if (home_has_toggle()) foot = home_sel >= 0 ? "C:NEXT  HOLD:TGL" : "C:PICK A SWITCH";
             break;
     }
-    if (foot) pet::text(x, y + 7 * pet::CELL, foot);
+    if (foot) pet::text(x, y + (d2 ? 1 : 7) * pet::CELL, foot);
 }
 
 // The row shows "..." on the glass before the POST blocks, like the desk
@@ -622,46 +647,59 @@ void draw_info() {
     char buf[56];          // SSID (32) + RSSI, before it gets clipped on screen
     const auto& c = settings::state();
 
+    // Six 9 px rows under the header. The first would start at row 13, so a
+    // two-colour panel puts the host name in the header instead of SYSTEM and
+    // starts the other five below the seam.
+    bool d2 = duo();
     g.setFont(u8g2_font_5x7_tf);
-    at(1, 7, "SYSTEM");
+    at(1, 7, d2 ? c.hostname : "SYSTEM");
     right(FW_VERSION, board::OLED_W - 1, 7);
     hline(9);
 
-    at(1, 19, "host");
-    at(34, 19, c.hostname);
+    int y = d2 ? DUO_SEAM + 7 : 19;
+    if (!d2) {
+        at(1, y, "host");
+        at(34, y, c.hostname);
+        y += 9;
+    }
 
     bool up = WiFi.status() == WL_CONNECTED;
-    at(1, 28, "ip");
-    at(34, 28, up ? WiFi.localIP().toString().c_str() : WiFi.softAPIP().toString().c_str());
+    at(1, y, "ip");
+    at(34, y, up ? WiFi.localIP().toString().c_str() : WiFi.softAPIP().toString().c_str());
+    y += 9;
 
-    at(1, 37, "wifi");
+    at(1, y, "wifi");
     if (up) snprintf(buf, sizeof(buf), "%s %ddBm", c.wifi_ssid, (int)WiFi.RSSI());
     else    snprintf(buf, sizeof(buf), "AP mode");
-    at(34, 37, buf);
+    at(34, y, buf);
+    y += 9;
 
-    at(1, 46, "up");
+    at(1, y, "up");
     uptime_text(buf, sizeof(buf));
-    at(34, 46, buf);
+    at(34, y, buf);
+    y += 9;
 
-    at(1, 55, "heap");
+    at(1, y, "heap");
     snprintf(buf, sizeof(buf), "%u B", (unsigned)ESP.getFreeHeap());
-    at(34, 55, buf);
+    at(34, y, buf);
+    y += 9;
 
     char age[8];
     age_text(age, sizeof(age), weather::data_age_s());
-    at(1, 62, "time");
+    at(1, y, "time");
     snprintf(buf, sizeof(buf), "%s  wx %s",
              timekeeper::synced() ? "synced" : "no ntp", age);
-    at(34, 62, buf);
+    at(34, y, buf);
 }
 
 void draw_toast() {
     U8G2& g = display::u8g2();
-    g.drawRFrame(ox + 3, oy + 7, board::OLED_W - 7 - ox, 48, 5);
+    bool d2 = duo();             // a two-colour panel gets the card below the seam
+    g.drawRFrame(ox + 3, oy + (d2 ? DUO_SEAM + 1 : 7), board::OLED_W - 7 - ox, d2 ? 46 : 48, 5);
     g.setFont(u8g2_font_7x13B_tf);
-    centred(toast_title, 32);
+    centred(toast_title, d2 ? 36 : 32);
     g.setFont(u8g2_font_6x12_tf);
-    centred(toast_sub, 48);
+    centred(toast_sub, d2 ? 52 : 48);
 }
 
 uint32_t frame_ms() {

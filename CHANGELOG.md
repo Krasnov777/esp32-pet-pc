@@ -5,6 +5,21 @@ running one is on the System screen and in `/api/state` (`live.fw`).
 Settings live in NVS and survive every update below — each entry says when
 a settings blob was migrated.
 
+## 1.4.0 — 2026-10-14
+
+- **Two-colour panel setting** (Display → Panel). The common yellow/blue
+  0.96" OLEDs have a yellow band on rows 0–15 and a strip of bare glass before
+  the blue part. With the option on, nothing is drawn across that strip:
+  - Block clock: date and condition both in the yellow band, the digits in
+    the blue part.
+  - Clock: the time uses the 26 px face, below the band.
+  - System: the host name moves into the header.
+  - HOME: the footer moves up under the title, so all six entities are blue.
+  - Weather, the toast card and the plain boot card move clear of the band.
+  The live mirror on the web page shows the yellow band too.
+- Settings: new `petpc/panel` blob. An updated device starts with the option
+  off, so it looks the same as before; nothing else is migrated.
+
 ## 1.3.2 — 2026-10-10
 
 - The bottom text row no longer loses its last pixel line while the burn-in

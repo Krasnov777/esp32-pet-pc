@@ -72,6 +72,15 @@ struct Retro {
     bool    boot;            // BASIC banner at power-on instead of the plain boot card
 };
 
+// What kind of glass is fitted. A blob of its own (NVS key `panel`) for the
+// same reason as Retro: a new option must not reset an existing one.
+struct Panel {
+    // Yellow/blue panel: rows 0..15 are yellow, rows 16..63 blue, with a
+    // visible seam between them. The screens then keep every element on one
+    // side of the seam (ui.cpp, DUO_SEAM).
+    bool two_colour;
+};
+
 // Home Assistant: where it is, how to get in, and which entities the HOME
 // screen shows. Each entity is either a Value (shown, read-only) or a Switch
 // (shown ON/OFF and toggled from the centre key).
@@ -135,6 +144,7 @@ void reset_to_defaults();
 // Access — the returned references are mutable; call save() to persist.
 Config& state();
 Retro&  retro();
+Panel&  panel();
 Ha&     ha();
 Keys&   keys();
 
@@ -142,7 +152,7 @@ Keys&   keys();
 // Keys: wifi.{ssid,pass,hostname}, loc.{lat,lon,tz,ntp}, clock_24h,
 //       weather.{host,minutes},
 //       display.{contrast_day,contrast_night,night_from,night_to,
-//                burn_in_shift,start_mode},
+//                burn_in_shift,start_mode,two_colour},
 //       retro.{screens,saver_min,fx,tape,boot},
 //       ha.{url,token,entities[i].{id,label,type},poll_s}   (type: "value"|"switch"),
 //       keys.{left,right}.{press,hold}.{type,label,url,method,screen,entity,service}

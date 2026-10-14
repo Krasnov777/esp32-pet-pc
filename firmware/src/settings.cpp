@@ -27,6 +27,8 @@ constexpr uint8_t  HA_VERSION    = 2;            // 2: per-entity Value/Switch t
 constexpr uint8_t  HOME_SCREEN_BIT = 1 << 6;     // ui::Mode::Home
 constexpr uint32_t KEYS_MAGIC    = 0x5045544B;   // 'PETK'
 constexpr uint8_t  KEYS_VERSION  = 1;
+constexpr uint32_t PANEL_MAGIC   = 0x50455444;   // 'PETD'
+constexpr uint8_t  PANEL_VERSION = 1;
 
 // Same layout the single Config blob has always had, so existing images load.
 template <typename T>
@@ -42,6 +44,7 @@ Stored<Config> blob;
 Stored<Retro>  retro_blob;
 Stored<Ha>     ha_blob;
 Stored<Keys>   keys_blob;
+Stored<Panel>  panel_blob;
 
 // The v1 HA layout — Ha without `type`. Only here to carry a v1 image (and
 // the token in it) over to v2 instead of resetting it.
@@ -60,6 +63,7 @@ constexpr const char* NVS_KEY       = "cfg";
 constexpr const char* NVS_RETRO_KEY = "retro";
 constexpr const char* NVS_HA_KEY    = "ha";
 constexpr const char* NVS_KEYS_KEY  = "keys";
+constexpr const char* NVS_PANEL_KEY = "panel";
 
 // JSON names for KeyActionType, in enum order.
 const char* const KEY_TYPE_NAMES[KA_COUNT] = {
@@ -321,6 +325,10 @@ void begin() {
         memset(keys_blob._pad, 0, sizeof(keys_blob._pad));
         seed_keys(keys_blob.cfg, blob.cfg);
     }
+    if (!load(NVS_PANEL_KEY, PANEL_MAGIC, PANEL_VERSION, panel_blob)) {
+        Serial.println(F("[settings] no panel image — single-colour panel"));
+        memset(&panel_blob, 0, sizeof(panel_blob));
+    }
     save();     // clamps, and writes only a blob that was just seeded
 }
 
@@ -333,6 +341,7 @@ void save() {
     store(NVS_RETRO_KEY, RETRO_MAGIC, RETRO_VERSION, retro_blob);
     store(NVS_HA_KEY, HA_MAGIC, HA_VERSION, ha_blob);
     store(NVS_KEYS_KEY, KEYS_MAGIC, KEYS_VERSION, keys_blob);
+    store(NVS_PANEL_KEY, PANEL_MAGIC, PANEL_VERSION, panel_blob);
 }
 
 void reset_to_defaults() {
@@ -340,11 +349,13 @@ void reset_to_defaults() {
     seed_retro(retro_blob.cfg);
     seed_ha(ha_blob.cfg);
     seed_keys(keys_blob.cfg, blob.cfg);
+    panel_blob.cfg = Panel{};
     save();
 }
 
 Config& state() { return blob.cfg; }
 Retro&  retro() { return retro_blob.cfg; }
+Panel&  panel() { return panel_blob.cfg; }
 Ha&     ha()    { return ha_blob.cfg; }
 Keys&   keys()  { return keys_blob.cfg; }
 
@@ -385,6 +396,7 @@ bool apply_json(JsonVariantConst p) {
         ch |= copy_num(c.night_to,       d["night_to"]);
         ch |= copy_num(c.burn_in_shift,  d["burn_in_shift"]);
         ch |= copy_num(c.start_mode,     d["start_mode"]);
+        ch |= copy_num(panel_blob.cfg.two_colour, d["two_colour"]);
     }
 
     Retro& r = retro_blob.cfg;
@@ -501,6 +513,7 @@ void to_json(JsonObject out, bool include_secrets) {
     d["night_to"]       = c.night_to;
     d["burn_in_shift"]  = c.burn_in_shift;
     d["start_mode"]     = c.start_mode;
+    d["two_colour"]     = panel_blob.cfg.two_colour;
 
     const Retro& r = retro_blob.cfg;
     JsonObject rv = out["retro"].to<JsonObject>();

@@ -133,6 +133,10 @@ legs. It has **no polarity**, and with only three keys there is no matrix, so
 - If you ever swap in a **1.3" SH1106** panel for a bigger PET screen, it
   looks identical but needs a different U8g2 constructor in `display.cpp`
   (`U8G2_SH1106_128X64_NONAME_F_HW_I2C`). Same wiring.
+- **Two-colour (yellow/blue) panels** are the same SSD1306 with a yellow band
+  on the top 16 rows and a visible gap before the blue part. They need no code
+  change. Turn on **Two-colour panel** under Display on the web page so that
+  nothing is drawn across the gap.
 
 ---
 

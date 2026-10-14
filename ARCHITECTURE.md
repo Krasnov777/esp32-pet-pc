@@ -66,7 +66,7 @@ fetch is too: the `LOADING` line is on the glass before the GET starts (see
 | Module | Owns | Depends on |
 |--------|------|-----------|
 | `board_config.h` | Every GPIO number in the project | — |
-| `settings` | `Config`, `Retro`, `Ha` and `Keys` structs, their NVS blobs and migrations, JSON patch/serialise | ArduinoJson, Preferences |
+| `settings` | `Config`, `Retro`, `Panel`, `Ha` and `Keys` structs, their NVS blobs and migrations, JSON patch/serialise | ArduinoJson, Preferences |
 | `display` | `Wire` bring-up, the U8g2 object, contrast, panel power, BMP capture | board_config |
 | `icons` | Weather + WiFi glyphs drawn from primitives | display, weather |
 | `pet` | The 8x8 text face, PETSCII graphics cells (blocks, triangles, maze diagonals) | display |
@@ -197,6 +197,7 @@ and leaves the existing one alone.
 | `petpc/retro` | `Retro`  | `PETR` | 2 | v1 (1.1.0) → v2 (1.2.0): same layout, HOME bit set in `screens` |
 | `petpc/ha`    | `Ha`     | `PETH` | 2 | v1 (1.2.0) → v2 (1.2.1): `type[]` appended, filled from each entity's domain |
 | `petpc/keys`  | `Keys`   | `PETK` | 1 | new in 1.3.0: seeded from `Config`'s old desk presets (press = POST to them), or previous/next screen on a fresh device |
+| `petpc/panel` | `Panel`  | `PETD` | 1 | new in 1.4.0: `two_colour` off |
 
 `Config` still carries the 1.x desk presets (`desk_url`, `desk_label`), only
 to seed `keys` once — removing them would change `Config`'s size and reset it.
