@@ -169,7 +169,7 @@ const TABS=[['live','Live'],['keys','Keys'],['screens','Screens'],['display','Di
  ['time','Weather & time'],['net','Network'],['sys','System']];
 const KEY_TYPES=[['none','Nothing'],['http','Send an HTTP request (webhook)'],['screen','Show a screen'],
  ['next','Next screen'],['prev','Previous screen'],['weather','Refresh the weather'],
- ['ha_toggle','Toggle a Home Assistant entity'],['ha_service','Call a Home Assistant service']];
+ ['ha_toggle','Toggle a Home Assistant entity'],['ha_service','Run a Home Assistant action']];
 const KEY_SHOW={http:['label','url','method'],screen:['screen'],ha_toggle:['label','entity'],
  ha_service:['label','service','entity']};
 const TZ=[['UTC','UTC — no daylight saving','UTC0'],
@@ -255,16 +255,23 @@ function build(){
    method:field('keys',p+'.method',{kind:'select',label:'Method',opts:[['POST','POST (empty body) — ESPHome buttons, webhooks'],['GET','GET']],into:card}),
    screen:field('keys',p+'.screen',{kind:'select',label:'Screen',opts:SCREEN_OPTS,numeric:true,into:card,
     help:'Jumps straight there, even to a screen that is not in the centre key\'s rotation.'}),
-   service:field('keys',p+'.service',{kind:'text',label:'Service',ph:'scene.turn_on',into:card,
-    help:'domain.service — e.g. <code>scene.turn_on</code>, <code>script.turn_on</code>, '+
-     '<code>input_select.select_next</code> (cycle a selector), <code>light.turn_on</code>.'}),
+   service:field('keys',p+'.service',{kind:'text',label:'Action',ph:'light.turn_off',into:card,
+    help:'<b>What to do</b>, as <code>domain.action</code>: <code>light.turn_off</code>, '+
+     '<code>input_select.select_next</code> (cycle a selector)… To run an automation or a scene, put '+
+     '<code>automation.trigger</code> or <code>scene.turn_on</code> here and the automation or scene '+
+     'itself in Entity. A script can go here directly (<code>script.night_mode</code>).'}),
    entity:field('keys',p+'.entity',{kind:'text',label:'Entity',ph:'light.desk_lamp',into:card,
-    help:'The entity_id, as in HA → Settings → Entities. Needs the Home Assistant tab set up.'}),
+    help:'<b>What to do it to</b>: the entity_id, as in HA → Settings → Entities '+
+     '(<code>light.desk_lamp</code>, <code>automation.night_lights</code>). Needs the Home Assistant tab set up.'}),
   };
   sub.url.check=function(){const v=this.get();return !v?'REQUIRED':!RE_URL.test(v)?'START WITH http:// OR https://':''};
   sub.entity.check=function(){const v=this.get(),need=t.get()==='ha_toggle';
    return !v?(need?'REQUIRED':''):!RE_ENT.test(v)?'LIKE light.desk_lamp':''};
-  sub.service.check=function(){const v=this.get();return !v?'REQUIRED':!RE_ENT.test(v)?'LIKE scene.turn_on':''};
+  // automation.<name> and scene.<name> are entities, not actions: HA rejects them as one
+  const ENTITY_ONLY={automation:['trigger','turn_on','turn_off','toggle','reload'],scene:['turn_on','apply','create','delete','reload']};
+  sub.service.check=function(){const v=this.get();if(!v)return 'REQUIRED';if(!RE_ENT.test(v))return 'LIKE light.turn_off';
+   const [d,a]=v.split('.');return ENTITY_ONLY[d]&&!ENTITY_ONLY[d].includes(a)
+    ?`THAT IS AN ENTITY: ACTION ${d==='scene'?'scene.turn_on':'automation.trigger'}, PUT IT IN ENTITY`:''};
   const test=document.createElement('div');
   test.innerHTML=`<button data-try="${side}" data-hold="${phase==='hold'?1:0}">Try it</button>
    <span class="help">runs the <i>saved</i> action on the device</span>`;

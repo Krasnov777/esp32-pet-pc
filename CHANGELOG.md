@@ -5,6 +5,16 @@ running one is on the System screen and in `/api/state` (`live.fw`).
 Settings live in NVS and survive every update below — each entry says when
 a settings blob was migrated.
 
+## Unreleased
+
+- **Keys tab: clearer Home Assistant actions.** "Call a Home Assistant
+  service" is now "Run a Home Assistant action" (HA's current name), and the
+  help text says which box takes what: the action (`automation.trigger`,
+  `scene.turn_on`, `light.turn_off`) and the entity it acts on. An automation
+  or scene ID typed into the Action box, a mistake that made the key fail, is
+  flagged before saving. The README has a table of common cases. No settings
+  change.
+
 ## 1.4.0 — 2026-10-14
 
 - **Two-colour panel setting** (Display → Panel). The common yellow/blue

@@ -209,7 +209,26 @@ keys can:
 | **Next / previous screen** | the out-of-the-box setting |
 | **Refresh the weather** | |
 | **Toggle a Home Assistant entity** | `light.desk_lamp` |
-| **Call a Home Assistant service** | `scene.turn_on`, `script.turn_on`, `input_select.select_next` (cycle through modes) |
+| **Run a Home Assistant action** | an automation, scene or script, `light.turn_off`, `input_select.select_next` (cycle through modes): see below |
+
+**Running a Home Assistant action.** The key sends HA two things: the
+**Action**, which is *what to do*, and the optional **Entity**, which is *what to
+do it to*. HA lists automations and scenes as entities, so their IDs go in
+**Entity**, under the action that runs them:
+
+| To run | Action | Entity |
+|---|---|---|
+| an automation | `automation.trigger` | `automation.night_lights` |
+| a scene | `scene.turn_on` | `scene.movie_time` |
+| a script | `script.night_mode` (or `script.turn_on`) | (empty, or `script.night_mode`) |
+| a built-in action | `light.turn_off`, `cover.open_cover`… | `light.desk_lamp` |
+| cycle a selector | `input_select.select_next` | `input_select.house_mode` |
+
+`automation.night_lights` in the Action box does nothing: HA has no action by
+that name and answers with an error, so the key shows "failed". The Keys tab
+flags it before you save. Only `entity_id` is sent, no other data, so for a
+brightness, colour or anything else with options, wrap it in a script and run
+the script.
 
 Anything that goes to the network shows "sending…" on the screen, then the
 result.
