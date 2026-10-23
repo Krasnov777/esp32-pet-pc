@@ -269,7 +269,8 @@ entered for.
 
 ## API
 
-The page uses a small JSON API, open to your own scripts too:
+The page uses a small JSON API, open to your own scripts too. Every route needs
+the web login (HTTP Basic, `WEB_USER` / `WEB_PASSWORD` from `secrets.h`):
 
 | Method | Path | |
 |--------|------|-|
@@ -282,8 +283,8 @@ The page uses a small JSON API, open to your own scripts too:
 | `GET`  | `/shot.bmp` | the current screen as a 1-bit BMP |
 
 ```bash
-curl -X POST 'http://pet-pc.local/api/key?key=right'          # press the right key
-curl -X POST -H 'Content-Type: application/json' \
+curl -u admin:<pw> -X POST 'http://pet-pc.local/api/key?key=right'          # press the right key
+curl -u admin:<pw> -X POST -H 'Content-Type: application/json' \
      -d '{"display":{"contrast_day":90}}' http://pet-pc.local/api/settings
 ```
 
@@ -291,11 +292,13 @@ curl -X POST -H 'Content-Type: application/json' \
 
 ## Good to know
 
-- **The web page and API have no password.** Anyone on your network can change
-  settings or press the keys; the WiFi password and HA token cannot be read
-  back. Keep PET-PC on a network you trust.
-- **Change the OTA password** if the network is shared (see
-  [Updating over WiFi](#updating-over-wifi)).
+- **The web page and API need a login** (HTTP Basic, set in `secrets.h`). Basic
+  auth travels in clear text over plain HTTP, so it keeps out casual LAN
+  clients, not someone sniffing your network. The WiFi password and HA token
+  are never sent back by the API.
+- **OTA needs `OTA_PASSWORD`** from `secrets.h`; there is no default.
+- **Give it a non-admin Home Assistant token.** The device only reads states
+  and calls the actions you configure.
 - **An HTTP action waits up to 4 s** for a target that does not answer; the
   screen says "sending…" meanwhile.
 - **OLED care.** OLEDs wear with brightness and time. The defaults — day

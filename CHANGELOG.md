@@ -5,8 +5,14 @@ running one is on the System screen and in `/api/state` (`live.fw`).
 Settings live in NVS and survive every update below — each entry says when
 a settings blob was migrated.
 
-## Unreleased
+## 1.5.0
 
+- **OTA and web UI now require passwords.** `src/secrets.h` is mandatory
+  (the build stops without it) and holds `OTA_PASSWORD` plus `WEB_USER` /
+  `WEB_PASSWORD`. Every page and `/api/*` route uses HTTP Basic auth. The old
+  `pet-pc` OTA fallback, which was also in `platformio.ini`, is gone, and
+  `env:ota` reads `PETPC_OTA_PASSWORD` from the environment. No settings
+  migration.
 - **Keys tab: clearer Home Assistant actions.** "Call a Home Assistant
   service" is now "Run a Home Assistant action" (HA's current name), and the
   help text says which box takes what: the action (`automation.trigger`,
