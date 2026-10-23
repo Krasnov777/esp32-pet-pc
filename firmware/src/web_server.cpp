@@ -9,6 +9,12 @@
 #include "web_page.h"
 
 #include <WebServer.h>
+
+#if __has_include("secrets.h")
+#include "secrets.h"
+#else
+#error "src/secrets.h is missing: copy src/secrets.h.example to src/secrets.h and set the passwords"
+#endif
 #include <WiFi.h>
 #include <ArduinoJson.h>
 
@@ -137,22 +143,35 @@ void handle_shot() {
 
 }  // namespace
 
+// Every route requires HTTP Basic auth (credentials in secrets.h). The browser
+// asks once, then re-sends them on the page's own fetch() calls.
+template <typename F>
+std::function<void()> authed(F fn) {
+    return [fn]() {
+        if (!server.authenticate(WEB_USER, WEB_PASSWORD)) {
+            server.requestAuthentication(BASIC_AUTH, "PET-PC");
+            return;
+        }
+        fn();
+    };
+}
+
 void begin() {
     // send_P streams the page straight from flash instead of copying ~30 KB into a String.
-    server.on("/", HTTP_GET, []() { server.send_P(200, "text/html", INDEX_HTML); });
-    server.on("/api/state",    HTTP_GET,  send_state);
-    server.on("/api/settings", HTTP_POST, handle_settings);
-    server.on("/api/key",      HTTP_POST, handle_key);
-    server.on("/api/mode",     HTTP_POST, []() {
+    server.on("/", HTTP_GET, authed([]() { server.send_P(200, "text/html", INDEX_HTML); }));
+    server.on("/api/state",    HTTP_GET,  authed(send_state));
+    server.on("/api/settings", HTTP_POST, authed(handle_settings));
+    server.on("/api/key",      HTTP_POST, authed(handle_key));
+    server.on("/api/mode",     HTTP_POST, authed([]() {
         ui::next_mode();
         server.send(200, "application/json", "{\"ok\":true}");
-    });
-    server.on("/api/reboot",   HTTP_POST, []() {
+    }));
+    server.on("/api/reboot",   HTTP_POST, authed([]() {
         server.send(200, "application/json", "{\"ok\":true}");
         reboot_at = millis() + 500;      // let the response flush first
-    });
-    server.on("/api/ha/test",  HTTP_POST, handle_ha_test);
-    server.on("/shot.bmp",     HTTP_GET,  handle_shot);
+    }));
+    server.on("/api/ha/test",  HTTP_POST, authed(handle_ha_test));
+    server.on("/shot.bmp",     HTTP_GET,  authed(handle_shot));
     server.onNotFound([]() { server.send(404, "text/plain", "not found"); });
     server.begin();
     Serial.println(F("[web] listening on :80"));

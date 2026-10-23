@@ -22,9 +22,8 @@
 
 #if __has_include("secrets.h")
 #include "secrets.h"
-#endif
-#ifndef OTA_PASSWORD
-#define OTA_PASSWORD "pet-pc"
+#else
+#error "src/secrets.h is missing: copy src/secrets.h.example to src/secrets.h and set the passwords"
 #endif
 
 namespace {

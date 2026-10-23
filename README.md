@@ -171,12 +171,18 @@ PET-PC retries your network every five minutes.
 <summary>Prefer not to type the WiFi password on a phone? Build it in instead.</summary>
 
 ```bash
-cp src/secrets.h.example src/secrets.h   # set WIFI_SSID / WIFI_PASSWORD, then build and upload
+cp src/secrets.h.example src/secrets.h   # optionally set WIFI_SSID / WIFI_PASSWORD, then build and upload
 ```
 
-`secrets.h` only seeds the first boot and is git-ignored; after that, settings
-live on the device and are edited from the web page.
+`secrets.h` is git-ignored. Its WiFi values only seed the first boot; after
+that, settings live on the device and are edited from the web page.
 </details>
+
+**`src/secrets.h` is required.** The build fails without it, because it holds
+the OTA password and the web UI login (`WEB_USER` / `WEB_PASSWORD`, HTTP Basic
+auth on every page and `/api/*` route). Copy `src/secrets.h.example` and set
+long random values.
+
 
 ### Updating over WiFi
 
@@ -184,9 +190,10 @@ live on the device and are edited from the web page.
 pio run -e ota -t upload --upload-port <device-ip>
 ```
 
-The OTA password is `pet-pc` unless you set `OTA_PASSWORD` in `secrets.h` —
-**change it** (there and in `upload_flags` in `platformio.ini`) if your network
-is shared. Pass the IP rather than `pet-pc.local`: espota's `.local` lookup hangs
+The OTA password is `OTA_PASSWORD` from `secrets.h`; `platformio.ini` reads it
+from the environment: `export PETPC_OTA_PASSWORD=...` before uploading. (Older
+builds used the public default `pet-pc`. Change it if a unit still has that.)
+Pass the IP rather than `pet-pc.local`: espota's `.local` lookup hangs
 on macOS. An upload takes about a minute; settings survive every update.
 
 ---
