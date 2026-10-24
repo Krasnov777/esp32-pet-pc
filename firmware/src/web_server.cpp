@@ -145,9 +145,36 @@ void handle_shot() {
 
 // Every route requires HTTP Basic auth (credentials in secrets.h). The browser
 // asks once, then re-sends them on the page's own fetch() calls.
+// Answer only requests addressed to this device (DNS-rebinding guard) and
+// refuse state changes started by another site (CSRF): a cached Basic-auth
+// login would otherwise be replayed by the browser.
+bool host_allowed(String h) {
+    int colon = h.indexOf(':');
+    if (colon >= 0) h = h.substring(0, colon);
+    h.toLowerCase();
+    String name = settings::state().hostname;
+    name.toLowerCase();
+    return h.isEmpty() || h == WiFi.localIP().toString() || h == WiFi.softAPIP().toString()
+        || h == name || h == name + ".local";
+}
+
+bool request_allowed() {
+    if (!host_allowed(server.hostHeader())) return false;
+    if (server.method() != HTTP_GET && server.hasHeader("Origin")) {
+        String o = server.header("Origin");
+        int s = o.indexOf("://");
+        if (s < 0 || !host_allowed(o.substring(s + 3))) return false;
+    }
+    return true;
+}
+
 template <typename F>
 std::function<void()> authed(F fn) {
     return [fn]() {
+        if (!request_allowed()) {
+            server.send(403, "text/plain", "Forbidden");
+            return;
+        }
         if (!server.authenticate(WEB_USER, WEB_PASSWORD)) {
             server.requestAuthentication(BASIC_AUTH, "PET-PC");
             return;
@@ -157,6 +184,8 @@ std::function<void()> authed(F fn) {
 }
 
 void begin() {
+    static const char* kCollect[] = {"Origin"};
+    server.collectHeaders(kCollect, 1);
     // send_P streams the page straight from flash instead of copying ~30 KB into a String.
     server.on("/", HTTP_GET, authed([]() { server.send_P(200, "text/html", INDEX_HTML); }));
     server.on("/api/state",    HTTP_GET,  authed(send_state));

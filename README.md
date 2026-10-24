@@ -292,7 +292,7 @@ curl -u admin:<pw> -X POST -H 'Content-Type: application/json' \
 
 ## Good to know
 
-- **The web page and API need a login** (HTTP Basic, set in `secrets.h`). Basic
+- **The web page and API need a login** (HTTP Basic, set in `secrets.h`). Requests must be addressed to the device itself (its IP or hostname), and cross-site POSTs are refused. Basic
   auth travels in clear text over plain HTTP, so it keeps out casual LAN
   clients, not someone sniffing your network. The WiFi password and HA token
   are never sent back by the API.

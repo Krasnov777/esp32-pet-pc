@@ -5,6 +5,15 @@ running one is on the System screen and in `/api/state` (`live.fw`).
 Settings live in NVS and survive every update below — each entry says when
 a settings blob was migrated.
 
+## 1.5.1
+
+- **Host/Origin guard:** every route answers 403 unless `Host` is the
+  device's IP, hotspot IP or hostname (DNS-rebinding guard), and POSTs whose
+  `Origin` names another site are refused (CSRF guard; the browser would
+  otherwise replay the cached Basic-auth login).
+- **Weather over HTTP/1.1** (`Connection: close`, body read with
+  `getString()`, which de-chunks). Some APIs now refuse HTTP/1.0.
+
 ## 1.5.0
 
 - **OTA and web UI now require passwords.** `src/secrets.h` is mandatory

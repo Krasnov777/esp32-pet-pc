@@ -67,9 +67,10 @@ bool fetch() {
     WiFiClient  net;
     HTTPClient  http;
     http.setTimeout(TIMEOUT_MS);
-    // HTTP/1.0 → no chunked transfer encoding, which keeps getStream() a plain
-    // byte stream that ArduinoJson can read straight through.
-    http.useHTTP10(true);
+    // HTTP/1.1 (APIs have started refusing HTTP/1.0, e.g. adsb.lol's 426 in
+    // 2026-10). The reply may be chunked, so read it with getString(), which
+    // de-chunks; at ~1.5 KB it fits the heap easily. Connection: close.
+    http.setReuse(false);
     if (!http.begin(net, url)) {
         Serial.println(F("[weather] malformed URL"));
         return false;
@@ -100,9 +101,10 @@ bool fetch() {
     fd["precipitation_probability_max"] = true;
 
     JsonDocument doc;
-    DeserializationError err =
-        deserializeJson(doc, http.getStream(), DeserializationOption::Filter(filter));
+    String body = http.getString();
     http.end();
+    DeserializationError err =
+        deserializeJson(doc, body, DeserializationOption::Filter(filter));
     if (err) {
         Serial.printf("[weather] parse: %s\n", err.c_str());
         return false;
